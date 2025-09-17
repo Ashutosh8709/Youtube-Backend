@@ -115,6 +115,47 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
 	// TODO: update a comment
+	const { newComment } = req.body;
+	const { commentId } = req.params;
+	const userId = req.user?._id;
+
+	if (!newComment && !commentId) {
+		throw new ApiError(400, "New Comment or COmment id missing");
+	}
+
+	try {
+		const existingComment = await Comment.findById(commentId);
+		if (!existingComment) {
+			throw new ApiError(
+				400,
+				"Comment not found for updating"
+			);
+		}
+
+		if (existingComment.owner.toString() !== userId.toString()) {
+			throw new ApiError(400, "User not owner of comment");
+		}
+
+		existingComment.content = newComment;
+
+		const updatedComment = await existingComment.save();
+
+		if (!updatedComment) {
+			throw new ApiError(400, "Error while updating Comment");
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiError(
+					200,
+					updatedComment,
+					"Comment Updated Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, error.message);
+	}
 });
 
 const deleteComment = asyncHandler(async (req, res) => {

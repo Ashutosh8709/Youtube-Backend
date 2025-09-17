@@ -272,21 +272,25 @@ const updateAccoutDetails = asyncHandler(async (req, res) => {
 		throw new ApiError(400, "All Fields are required");
 	}
 
-	const updattedUser = await User.findByIdAndUpdate(
-		req.user?._id,
-		{ $set: { fullname, email } },
-		{ new: true }
-	).select("-password");
+	try {
+		const updattedUser = await User.findByIdAndUpdate(
+			req.user?._id,
+			{ $set: { fullname, email } },
+			{ new: true }
+		).select("-password");
 
-	return res
-		.status(200)
-		.json(
-			new ApiResponse(
-				200,
-				updattedUser,
-				"Account Details Updated Successfully"
-			)
-		);
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					updattedUser,
+					"Account Details Updated Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, error.message);
+	}
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {

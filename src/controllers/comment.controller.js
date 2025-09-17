@@ -160,6 +160,38 @@ const updateComment = asyncHandler(async (req, res) => {
 
 const deleteComment = asyncHandler(async (req, res) => {
 	// TODO: delete a comment
+	const { commentId } = req.params;
+	const userId = req.user?._id;
+	if (!commentId) {
+		throw new ApiError(404, "Comment Id not Found");
+	}
+
+	try {
+		const existingComment = await Comment.findById(commentId);
+
+		if (!existingComment) {
+			throw new ApiError(400, "Comment not exist");
+		}
+
+		if (existingComment.owner.toString() !== userId.toString()) {
+			throw new ApiError(
+				403,
+				"User not Authenticated for deleting comment"
+			);
+		}
+		await existingComment.deleteOne();
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Comment Deleted Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, error.message);
+	}
 });
 
 export { getVideoComments, addComment, updateComment, deleteComment };

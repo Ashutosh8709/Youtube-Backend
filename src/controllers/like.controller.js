@@ -116,6 +116,55 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 const toggleTweetLike = asyncHandler(async (req, res) => {
 	const { tweetId } = req.params;
 	//TODO: toggle like on tweet
+	const userId = req.user?._id;
+
+	if (!tweetId) {
+		throw new ApiError(400, "Tweet Id not found");
+	}
+
+	if (!userId) {
+		throw new ApiError(401, "User not Authorized");
+	}
+
+	try {
+		const isTweetLiked = await Like.findOneAndDelete({
+			tweet: tweetId,
+			likedBy: userId,
+		});
+
+		if (isTweetLiked) {
+			return res
+				.status(200)
+				.json(
+					new ApiResponse(
+						200,
+						{},
+						"Tweet unliked"
+					)
+				);
+		}
+
+		const likeTweet = await Like.create({
+			tweet: tweetId,
+			likedBy: userId,
+		});
+
+		if (!likeTweet) {
+			throw new ApiError(400, "Error while liking tweet");
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Tweet Like successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, error.message);
+	}
 });
 
 const getLikedVideos = asyncHandler(async (req, res) => {

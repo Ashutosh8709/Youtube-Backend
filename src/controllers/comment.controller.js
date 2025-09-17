@@ -14,9 +14,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 		const comments = await Comment.aggregate([
 			{
 				$match: {
-					video: new mongoose.Types.ObjectId(
-						videoId
-					),
+					video: videoId,
 				},
 			},
 			{
@@ -88,8 +86,8 @@ const addComment = asyncHandler(async (req, res) => {
 	try {
 		const addedComment = await Comment.create({
 			content,
-			video: new mongoose.Types.ObjectId(videoId),
-			owner: new mongoose.Types.ObjectId(userId),
+			video: videoId,
+			owner: userId,
 		});
 
 		if (!addedComment) {

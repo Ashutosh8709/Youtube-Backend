@@ -7,6 +7,60 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const toggleVideoLike = asyncHandler(async (req, res) => {
 	const { videoId } = req.params;
 	//TODO: toggle like on video
+	if (!videoId) {
+		throw new ApiError(400, "Video Id not found");
+	}
+
+	const userId = req.user?._id;
+
+	if (!userId) {
+		return new ApiError(401, "User not found");
+	}
+
+	try {
+		const isVideoLiked = await Like.findOne({
+			video: videoId,
+			likedBy: userId,
+		});
+
+		if (isVideoLiked) {
+			await Like.deleteOne({
+				video: videoId,
+				likedBy: userId,
+			});
+
+			return res
+				.status(200)
+				.json(
+					new ApiResponse(
+						200,
+						{},
+						"Video Unliked"
+					)
+				);
+		}
+
+		const likedVideo = await Like.create({
+			video: videoId,
+			likedBy: userId,
+		});
+
+		if (!likedVideo) {
+			throw new ApiError(400, "Error while liking video");
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Video Liked Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, "Error occured while liking Video");
+	}
 });
 
 const toggleCommentLike = asyncHandler(async (req, res) => {

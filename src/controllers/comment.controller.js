@@ -1,0 +1,124 @@
+import mongoose from "mongoose";
+import { Comment } from "../models/comment.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+
+const getVideoComments = asyncHandler(async (req, res) => {
+	//TODO: get all comments for a video
+	const { videoId } = req.params;
+	const { page = 1, limit = 10 } = req.query;
+	if (!videoId) throw new ApiError(400, "VideoId is not provided");
+
+	try {
+		const comments = await Comment.aggregate([
+			{
+				$match: {
+					video: new mongoose.Types.ObjectId(
+						videoId
+					),
+				},
+			},
+			{
+				$lookup: {
+					from: "users",
+					localField: "owner",
+					foreignField: "_id",
+					as: "owners",
+				},
+			},
+			{
+				$addFields: {
+					commentMadeBy: {
+						$arrayElemAt: [
+							"$owners.username",
+							0,
+						],
+					},
+				},
+			},
+			{
+				$project: {
+					content: 1,
+					commentMadeBy: 1,
+					createdAt: 1,
+				},
+			},
+			{
+				$sort: { createdAt: -1 },
+			},
+		]);
+
+		if (!comments)
+			throw new ApiError(
+				500,
+				"Something Wrong in comment pipeline"
+			);
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					comments,
+					"Comments fetched successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, "Error while fetching Comments");
+	}
+});
+
+const addComment = asyncHandler(async (req, res) => {
+	// TODO: add a comment to a video
+	const { videoId } = req.params;
+	const { content } = req.body;
+	const userId = req.user?._id;
+	if (!videoId) {
+		throw new ApiError(400, "Video Id is missing");
+	}
+
+	if (!userId) {
+		throw new ApiError(401, "User not authenticated");
+	}
+	if (!content) {
+		throw new ApiError(400, "Content is missing");
+	}
+
+	try {
+		const addedComment = await Comment.create({
+			content,
+			video: new mongoose.Types.ObjectId(videoId),
+			owner: new mongoose.Types.ObjectId(userId),
+		});
+
+		if (!addedComment) {
+			throw new ApiError(
+				400,
+				"Error in Adding comment in DB"
+			);
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Comment Added Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, error.message);
+	}
+});
+
+const updateComment = asyncHandler(async (req, res) => {
+	// TODO: update a comment
+});
+
+const deleteComment = asyncHandler(async (req, res) => {
+	// TODO: delete a comment
+});
+
+export { getVideoComments, addComment, updateComment, deleteComment };

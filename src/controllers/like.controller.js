@@ -18,17 +18,12 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		const isVideoLiked = await Like.findOne({
+		const isVideoLiked = await Like.findOneAndDelete({
 			video: videoId,
 			likedBy: userId,
 		});
 
 		if (isVideoLiked) {
-			await Like.deleteOne({
-				video: videoId,
-				likedBy: userId,
-			});
-
 			return res
 				.status(200)
 				.json(
@@ -66,6 +61,56 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 const toggleCommentLike = asyncHandler(async (req, res) => {
 	const { commentId } = req.params;
 	//TODO: toggle like on comment
+
+	if (!commentId) {
+		throw new ApiError(401, "Comment Id not found");
+	}
+
+	const userId = req.user?._id;
+
+	if (!userId) {
+		throw new ApiError(402, "User Id not Found");
+	}
+
+	try {
+		const isCommentLiked = await Like.findOneAndDelete({
+			comment: commentId,
+			likedBy: userId,
+		});
+
+		if (isCommentLiked) {
+			return res
+				.status(200)
+				.json(
+					new ApiResponse(
+						200,
+						{},
+						"Unliked the comment"
+					)
+				);
+		}
+
+		const likedComment = await Like.create({
+			comment: commentId,
+			likedBy: userId,
+		});
+
+		if (!likedComment) {
+			throw new ApiError(400, "Error while liking comment");
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Comment Liked Successfully"
+				)
+			);
+	} catch (err) {
+		throw new ApiError(400, err.message);
+	}
 });
 
 const toggleTweetLike = asyncHandler(async (req, res) => {

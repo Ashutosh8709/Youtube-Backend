@@ -169,6 +169,78 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
 const getLikedVideos = asyncHandler(async (req, res) => {
 	//TODO: get all liked videos
+	// take user id
+	// select all videos where like by is this user
+	// use match and lookup aggregate for take video file name from video schema
+	// now return everything
+	const userId = req.user?._id;
+	if (!userId) {
+		throw new ApiError(401, "User not found");
+	}
+
+	try {
+		await Like.aggregate([
+			{
+				$match: {
+					likedBy: userId,
+					video: { $ne: null },
+				},
+			},
+			{
+				$lookup: {
+					from: "videos",
+					localFIeld: "video",
+					foreignFeild: "_id",
+					as: "videoDetails",
+				},
+			},
+			{
+				$addFields: {
+					videoFile: {
+						$arrayElemAt: [
+							"$videoDetails.videoFile",
+							[0],
+						],
+					},
+					thumbnail: {
+						$arrayElemAt: [
+							"$videoDetails.thumbnail",
+							[0],
+						],
+					},
+					title: {
+						$arrayElemAt: [
+							"$videoDetails.title",
+							[0],
+						],
+					},
+					description: {
+						$arrayElemAt: [
+							"$videoDetails.description",
+							[0],
+						],
+					},
+					duration: {
+						$arrayElemAt: [
+							"$videoDetails.duration",
+							[0],
+						],
+					},
+					views: {
+						$arrayElemAt: [
+							"$videoDetails.views",
+							[0],
+						],
+					},
+				},
+			},
+			{
+				$project: { video },
+			},
+		]);
+	} catch (error) {
+		throw new ApiError(400, error.message);
+	}
 });
 
 export { toggleCommentLike, toggleTweetLike, toggleVideoLike, getLikedVideos };

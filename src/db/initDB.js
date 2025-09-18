@@ -7,8 +7,6 @@ import { Tweet } from "../models/tweet.model.js";
 import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
 
-connectDB();
-
 const videoMockData = [
 	{
 		_id: "650f1c3a2a89c9d0a6c60001",
@@ -458,3 +456,31 @@ const userMockData = [
 		password: "Secret@123",
 	},
 ];
+
+const initDB = async () => {
+	await connectDB();
+	try {
+		await User.deleteMany({});
+		await User.insertMany(userMockData);
+
+		await Video.deleteMany({});
+		await Video.insertMany(videoMockData);
+
+		await Tweet.deleteMany({});
+		await Tweet.insertMany(tweetMockData);
+
+		await Subscription.deleteMany({});
+		await Subscription.insertMany(subscriptionMockData);
+
+		await Playlist.deleteMany({});
+		await Playlist.insertMany(playlistMockData);
+
+		await Comment.deleteMany({});
+		await Comment.insertMany(commentMockData);
+
+		await Like.deleteMany({});
+		await Like.insertMany(likeMockData);
+	} catch (error) {
+		console.error(error.message);
+	}
+};

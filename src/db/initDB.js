@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+dotenv.config({
+	path: "../../.env",
+});
 import connectDB from "./index.js";
 import { Comment } from "../models/comment.model.js";
 import { Like } from "../models/like.model.js";
@@ -459,7 +463,9 @@ const userMockData = [
 ];
 
 const initDB = async () => {
-	await connectDB();
+	connectDB().catch((err) => {
+		console.log("MONGODB connection failed !!", err);
+	});
 	try {
 		await User.deleteMany({});
 		await User.insertMany(userMockData);
@@ -485,3 +491,5 @@ const initDB = async () => {
 		console.error(error.message);
 	}
 };
+
+initDB();

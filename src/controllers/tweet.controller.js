@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { use } from "react";
 
 const createTweet = asyncHandler(async (req, res) => {
 	//TODO: create tweet
@@ -91,7 +92,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		const updatedTweet = await Tweet.findByIdAndUpdate(
+		const updatedTweet = await Tweet.findOneAndUpdate(
 			{ _id: tweetId, owner: userId },
 			{ $set: { content: newContent } },
 			{ $new: true }
@@ -119,6 +120,41 @@ const updateTweet = asyncHandler(async (req, res) => {
 
 const deleteTweet = asyncHandler(async (req, res) => {
 	//TODO: delete tweet
+	const { tweetId } = req.params;
+
+	if (!tweetId) {
+		throw new ApiError(400, "Tweet Id not found");
+	}
+
+	const userId = req.user?._id;
+	if (!userId) {
+		throw new ApiError(400, "User Id not found");
+	}
+
+	try {
+		const deletedTweet = await Tweet.findOneAndDelete({
+			_id: tweetId,
+			owner: userId,
+		});
+
+		if (!deletedTweet) {
+			throw new ApiError(
+				400,
+				"Tweet not exist or user not allowed to delete tweet"
+			);
+		}
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Tweet Deleted Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, "Error occured while deleting tweet");
+	}
 });
 
 export { createTweet, getUserTweets, updateTweet, deleteTweet };

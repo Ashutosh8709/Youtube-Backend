@@ -372,7 +372,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 								],
 							},
 							then: true,
-							false: false,
+							else: false,
 						},
 					},
 				},
@@ -391,7 +391,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 			},
 		]);
 
-		if (!channel?.length) {
+		if (channel.length === 0) {
 			throw new ApiError(404, "Channel Does not Exist");
 		}
 
@@ -405,10 +405,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
 				)
 			);
 	} catch (error) {
-		throw new ApiError(
-			400,
-			"Something went Wrong while fetching channel data"
-		);
+		throw new ApiError(400, error.message);
 	}
 });
 

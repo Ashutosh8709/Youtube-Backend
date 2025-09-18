@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { application } from "express";
 
 const getAllVideos = asyncHandler(async (req, res) => {
 	const {
@@ -165,10 +166,83 @@ const updateVideo = asyncHandler(async (req, res) => {
 const deleteVideo = asyncHandler(async (req, res) => {
 	const { videoId } = req.params;
 	//TODO: delete video
+	if (!videoId) {
+		throw new ApiError(400, "Video id not found");
+	}
+	const userId = req.user?._id;
+	if (!userId) {
+		throw new ApiError(404, "User not found");
+	}
+
+	try {
+		const existingVideo = await Video.findById(videoId);
+		if (!existingVideo) {
+			throw new ApiError(404, "Video not found");
+		}
+
+		if (existingVideo.owner.toString() !== userId.toString()) {
+			throw new ApiError(400, "User cant delete this video");
+		}
+
+		await existingVideo.deleteOne();
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Video deleted Successfully"
+				)
+			);
+	} catch (err) {
+		throw new ApiError(400, "Error while deleting video");
+	}
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
 	const { videoId } = req.params;
+
+	if (!videoId) {
+		throw new ApiError(400, "Video Id Not Found");
+	}
+
+	const userId = req.user?._id;
+	if (!userId) {
+		throw new ApiError(404, "User id not found");
+	}
+
+	try {
+		const existingVideo = await Video.findById(videoId);
+
+		if (!existingVideo) {
+			throw new ApiError(400, "Video not found");
+		}
+
+		if (existingVideo.owner.toString() !== userId.toString()) {
+			throw new ApiError(
+				400,
+				"User not authenticated for changing publish status"
+			);
+		}
+
+		const publishStatus = existingVideo.isPublished;
+		existingVideo.isPublished = !publishStatus;
+
+		await existingVideo.save();
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Publish status Changed"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, "Error while toggling publish status");
+	}
 });
 
 export {

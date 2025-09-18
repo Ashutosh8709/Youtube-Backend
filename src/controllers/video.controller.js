@@ -172,23 +172,23 @@ const deleteVideo = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		const existingVideo = await Video.findById(videoId);
+		const deletedVideo = await Video.findOneAndDelete({
+			_id: videoId,
+			owner: userId,
+		});
+
 		if (!existingVideo) {
-			throw new ApiError(404, "Video not found");
+			throw new ApiError(
+				"Either user is not allowed to delete this or the video doesnt exist"
+			);
 		}
-
-		if (existingVideo.owner.toString() !== userId.toString()) {
-			throw new ApiError(400, "User cant delete this video");
-		}
-
-		await existingVideo.deleteOne();
 
 		return res
 			.status(200)
 			.json(
 				new ApiResponse(
 					200,
-					{},
+					deletedVideo,
 					"Video deleted Successfully"
 				)
 			);
@@ -210,31 +210,24 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		const existingVideo = await Video.findById(videoId);
+		const updatedVideo = await Video.findOneAndUpdate(
+			{ _id: videoId, owner: userId },
+			{ $set: { isPublished: { xor: 1 } } },
+			{ new: true }
+		);
 
-		if (!existingVideo) {
-			throw new ApiError(400, "Video not found");
-		}
-
-		if (existingVideo.owner.toString() !== userId.toString()) {
+		if (!updatedVideo) {
 			throw new ApiError(
-				400,
-				"User not authenticated for changing publish status"
+				"Either user is not owner or video not found"
 			);
 		}
-
-		const publishStatus = existingVideo.isPublished;
-		existingVideo.isPublished = !publishStatus;
-
-		const updatedVideo = await existingVideo.save();
-
 		return res
 			.status(200)
 			.json(
 				new ApiResponse(
 					200,
 					updatedVideo,
-					"Publish status Changed"
+					"Publish status Changed Successfully"
 				)
 			);
 	} catch (error) {

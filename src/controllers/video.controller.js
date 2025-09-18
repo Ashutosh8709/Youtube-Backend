@@ -132,7 +132,9 @@ const updateVideo = asyncHandler(async (req, res) => {
 			throw new ApiError(400, "Thumbnail file not found");
 		}
 
-		const updatedThumbnail = uploadOnCloudinary(thumbnailLocalPath);
+		const updatedThumbnail = await uploadOnCloudinary(
+			thumbnailLocalPath
+		);
 
 		if (!updatedThumbnail) {
 			throw new ApiError(

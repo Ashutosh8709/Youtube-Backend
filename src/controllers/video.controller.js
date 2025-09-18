@@ -229,14 +229,14 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 		const publishStatus = existingVideo.isPublished;
 		existingVideo.isPublished = !publishStatus;
 
-		await existingVideo.save();
+		const updatedVideo = await existingVideo.save();
 
 		return res
 			.status(200)
 			.json(
 				new ApiResponse(
 					200,
-					{},
+					updatedVideo,
 					"Publish status Changed"
 				)
 			);

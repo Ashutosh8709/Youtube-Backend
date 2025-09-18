@@ -44,6 +44,33 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
 	// TODO: get user tweets
+	const { userId } = req.params;
+	if (!userId) {
+		throw new ApiError(404, "User not found");
+	}
+
+	try {
+		const existingTweets = await Tweet.find({ owner: userId });
+
+		if (existingTweets.length == 0) {
+			throw new ApiError(
+				400,
+				"Tweets for this user doesn't exist"
+			);
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					existingTweets,
+					"Tweets fetched successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, "Error while fetching user tweets");
+	}
 });
 
 const updateTweet = asyncHandler(async (req, res) => {

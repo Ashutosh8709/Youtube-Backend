@@ -6,6 +6,7 @@ import { Subscription } from "../models/subscription.model.js";
 import { Tweet } from "../models/tweet.model.js";
 import { User } from "../models/user.model.js";
 import { Video } from "../models/video.model.js";
+import mongoose from "mongoose";
 
 const videoMockData = [
 	{

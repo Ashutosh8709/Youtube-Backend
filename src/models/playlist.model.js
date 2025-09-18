@@ -1,4 +1,3 @@
-import { ref, required } from "joi";
 import mongoose, { Schema } from "mongoose";
 
 const playlistSchema = new Schema(

@@ -1,4 +1,3 @@
-import { ref } from "joi";
 import mongoose, { Schema } from "mongoose";
 
 const likeSchema = new Schema(

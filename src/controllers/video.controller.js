@@ -89,11 +89,75 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
 	const { videoId } = req.params;
 	//TODO: get video by id
+	if (!videoId) {
+		throw new ApiError(400, "Video Id not found");
+	}
+
+	try {
+		const video = await Video.findById(videoId);
+		if (!video) {
+			throw new ApiError(400, "Video not found");
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					video,
+					"Video found Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(500, "Error while fetching video By Id");
+	}
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
 	const { videoId } = req.params;
 	//TODO: update video details like title, description, thumbnail
+
+	const { title, description } = req.body;
+	if (!videoId) {
+		throw new ApiError(400, "Video Id not found");
+	}
+
+	if (!title || !description) {
+		throw new ApiError(400, "Didn't got data for updating");
+	}
+
+	try {
+		const thumbnailLocalPath = req.file?.path;
+		if (!thumbnailLocalPath) {
+			throw new ApiError(400, "Thumbnail file not found");
+		}
+
+		const updatedThumbnail = uploadOnCloudinary(thumbnailLocalPath);
+
+		if (!updatedThumbnail) {
+			throw new ApiError(
+				400,
+				"Error while uploading thumbnail"
+			);
+		}
+		const video = await Video.findByIdAndUpdate(videoId, {
+			title,
+			description,
+			thumbnail: updatedThumbnail.secure_url,
+		});
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					video,
+					"Video updated successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, "Error while upadating video details");
+	}
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {

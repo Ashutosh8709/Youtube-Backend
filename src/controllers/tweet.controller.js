@@ -7,6 +7,39 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const createTweet = asyncHandler(async (req, res) => {
 	//TODO: create tweet
+	const userId = req.user?._id;
+	if (!userId) {
+		throw new ApiError(404, "User not authenticated");
+	}
+
+	const { content } = req.body;
+
+	if (!content) {
+		throw new ApiError(400, "content not found");
+	}
+
+	try {
+		const tweet = await Tweet.create({
+			content,
+			owner: userId,
+		});
+
+		if (!tweet) {
+			throw new ApiError(500, "Error while saving tweet");
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					tweet,
+					"Tweet created successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(400, "Error while creating tweet");
+	}
 });
 
 const getUserTweets = asyncHandler(async (req, res) => {

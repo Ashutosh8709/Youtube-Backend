@@ -4,7 +4,6 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { use } from "react";
 
 const createTweet = asyncHandler(async (req, res) => {
 	//TODO: create tweet
@@ -95,7 +94,7 @@ const updateTweet = asyncHandler(async (req, res) => {
 		const updatedTweet = await Tweet.findOneAndUpdate(
 			{ _id: tweetId, owner: userId },
 			{ $set: { content: newContent } },
-			{ $new: true }
+			{ new: true }
 		);
 		if (!updatedTweet) {
 			throw new ApiError(
@@ -148,7 +147,7 @@ const deleteTweet = asyncHandler(async (req, res) => {
 			.json(
 				new ApiResponse(
 					200,
-					{},
+					deletedTweet,
 					"Tweet Deleted Successfully"
 				)
 			);

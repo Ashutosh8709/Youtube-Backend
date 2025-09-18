@@ -122,24 +122,16 @@ const updateComment = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		const existingComment = await Comment.findById(commentId);
-		if (!existingComment) {
+		const updatedComment = await Comment.findOneAndUpdate(
+			{ _id: commentId, owner: userId },
+			{ $set: { content: newComment } },
+			{ new: true }
+		);
+		if (!updatedComment) {
 			throw new ApiError(
 				400,
-				"Comment not found for updating"
+				"Either user is not allowed to update this or comment is not available"
 			);
-		}
-
-		if (existingComment.owner.toString() !== userId.toString()) {
-			throw new ApiError(400, "User not owner of comment");
-		}
-
-		existingComment.content = newComment;
-
-		const updatedComment = await existingComment.save();
-
-		if (!updatedComment) {
-			throw new ApiError(400, "Error while updating Comment");
 		}
 
 		return res
@@ -165,19 +157,17 @@ const deleteComment = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		const existingComment = await Comment.findById(commentId);
+		const deletedComment = await Comment.findOneAndDelete({
+			_id: commentId,
+			owner: userId,
+		});
 
-		if (!existingComment) {
-			throw new ApiError(400, "Comment not exist");
-		}
-
-		if (existingComment.owner.toString() !== userId.toString()) {
+		if (!deletedComment) {
 			throw new ApiError(
-				403,
-				"User not Authenticated for deleting comment"
+				"Either user is not allowed to delete this or comment is not present"
 			);
 		}
-		await existingComment.deleteOne();
+
 		return res
 			.status(200)
 			.json(

@@ -14,7 +14,9 @@ const getVideoComments = asyncHandler(async (req, res) => {
 		const comments = await Comment.aggregate([
 			{
 				$match: {
-					video: videoId,
+					video: new mongoose.Types.ObjectId(
+						videoId
+					),
 				},
 			},
 			{
@@ -37,6 +39,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
 			},
 			{
 				$project: {
+					_id: 0,
 					content: 1,
 					commentMadeBy: 1,
 					createdAt: 1,
@@ -102,7 +105,7 @@ const addComment = asyncHandler(async (req, res) => {
 			.json(
 				new ApiResponse(
 					200,
-					{},
+					addedComment,
 					"Comment Added Successfully"
 				)
 			);
@@ -137,7 +140,7 @@ const updateComment = asyncHandler(async (req, res) => {
 		return res
 			.status(200)
 			.json(
-				new ApiError(
+				new ApiResponse(
 					200,
 					updatedComment,
 					"Comment Updated Successfully"
@@ -173,12 +176,12 @@ const deleteComment = asyncHandler(async (req, res) => {
 			.json(
 				new ApiResponse(
 					200,
-					{},
+					deletedComment,
 					"Comment Deleted Successfully"
 				)
 			);
 	} catch (error) {
-		throw new ApiError(400, error.message);
+		throw new ApiError(500, "Error occured while deleting comment");
 	}
 });
 

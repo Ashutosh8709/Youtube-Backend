@@ -109,7 +109,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
 				new ApiResponse(
 					200,
 					channels,
-					"Channels fetched successfully"
+					"Subscribed Channels fetched successfully"
 				)
 			);
 	} catch (error) {

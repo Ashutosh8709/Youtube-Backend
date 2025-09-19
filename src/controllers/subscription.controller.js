@@ -94,6 +94,30 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 const getSubscribedChannels = asyncHandler(async (req, res) => {
 	// controller to return channel list to which user has subscribed
 	const { subscriberId } = req.params;
+	if (!subscriberId) {
+		throw new ApiError(400, "Subscriber Id not found");
+	}
+
+	try {
+		const channels = await Subscription.find({
+			subscriber: subscriberId,
+		});
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					channels,
+					"Channels fetched successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(
+			400,
+			"Error while fetching Channels subscribed"
+		);
+	}
 });
 
 export { toggleSubscription, getUserChannelSubscribers, getSubscribedChannels };

@@ -273,6 +273,48 @@ const updatePlaylist = asyncHandler(async (req, res) => {
 	const { playlistId } = req.params;
 	const { name, description } = req.body;
 	//TODO: update playlist
+
+	const userId = req.user?._id;
+	if (!playlistId) {
+		throw new ApiError(400, "Playlist Id not found ");
+	}
+
+	if (!name || !description) {
+		throw new ApiError(
+			400,
+			"Name and Description both are required"
+		);
+	}
+
+	try {
+		const updatedPlaylist = await Playlist.findOneAndUpdate(
+			{ _id: playlistId, owner: userId },
+			{ $set: { name, description } },
+			{ new: true }
+		);
+
+		if (!updatedPlaylist) {
+			throw new ApiError(
+				400,
+				"Playlist not found or you are not allowed to edit this"
+			);
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					updatedPlaylist,
+					"Playlist updated Successfully"
+				)
+			);
+	} catch (err) {
+		throw new ApiError(
+			400,
+			"Error Ocurred while updating playlist"
+		);
+	}
 });
 
 export {

@@ -189,7 +189,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 	const { playlistId, videoId } = req.params;
 	const userId = req.user?._id;
 	// TODO: remove video from playlist
-	if (!playlistId || videoId) {
+	if (!playlistId || !videoId) {
 		throw new ApiError(
 			400,
 			"Both playlist id and video id is required"

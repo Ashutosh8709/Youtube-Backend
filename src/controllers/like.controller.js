@@ -54,7 +54,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 				)
 			);
 	} catch (error) {
-		throw new ApiError(400, "Error occured while liking Video");
+		throw new ApiError(500, "Error occured while liking Video");
 	}
 });
 
@@ -109,7 +109,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 				)
 			);
 	} catch (err) {
-		throw new ApiError(400, err.message);
+		throw new ApiError(500, "Error occured while liking commnent");
 	}
 });
 
@@ -163,7 +163,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 				)
 			);
 	} catch (error) {
-		throw new ApiError(400, error.message);
+		throw new ApiError(500, "Error occured while liking tweet");
 	}
 });
 
@@ -179,7 +179,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
 	}
 
 	try {
-		await Like.aggregate([
+		const likedVideos = await Like.aggregate([
 			{
 				$match: {
 					likedBy: userId,
@@ -189,57 +189,64 @@ const getLikedVideos = asyncHandler(async (req, res) => {
 			{
 				$lookup: {
 					from: "videos",
-					localFIeld: "video",
-					foreignFeild: "_id",
-					as: "videoDetails",
+					localField: "video",
+					foreignField: "_id",
+					as: "likedVideos",
 				},
 			},
 			{
-				$addFields: {
-					videoFile: {
+				$project: {
+					VideoFile: {
 						$arrayElemAt: [
-							"$videoDetails.videoFile",
-							[0],
+							"$likedVideos.videoFile",
+							0,
 						],
 					},
 					thumbnail: {
 						$arrayElemAt: [
-							"$videoDetails.thumbnail",
-							[0],
+							"$likedVideos.thumbnail",
+							0,
 						],
 					},
 					title: {
 						$arrayElemAt: [
-							"$videoDetails.title",
-							[0],
+							"$likedVideos.title",
+							0,
 						],
 					},
 					description: {
 						$arrayElemAt: [
-							"$videoDetails.description",
-							[0],
+							"$likedVideos.description",
+							0,
 						],
 					},
 					duration: {
 						$arrayElemAt: [
-							"$videoDetails.duration",
-							[0],
+							"$likedVideos.duration",
+							0,
 						],
 					},
 					views: {
 						$arrayElemAt: [
-							"$videoDetails.views",
-							[0],
+							"$likedVideos.views",
+							0,
 						],
 					},
 				},
 			},
-			{
-				$project: { video },
-			},
 		]);
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					likedVideos,
+					"LIked videos fetched successfully"
+				)
+			);
 	} catch (error) {
-		throw new ApiError(400, error.message);
+		throw new ApiError(500, error.message);
 	}
 });
 

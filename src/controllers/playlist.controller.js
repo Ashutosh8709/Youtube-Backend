@@ -1,5 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Playlist } from "../models/playlist.model.js";
+import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -9,7 +10,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
 	//TODO: create playlist
 	const userId = req.user?._id;
 
-	if (!name && !description) {
+	if (!name || !description) {
 		throw new ApiError(
 			400,
 			"Name and Description both are required"
@@ -98,10 +99,90 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 const getPlaylistById = asyncHandler(async (req, res) => {
 	const { playlistId } = req.params;
 	//TODO: get playlist by id
+	if (!playlistId) {
+		throw new ApiError(400, "Playlist Id not found");
+	}
+
+	try {
+		const playlist = await Playlist.findById(playlistId);
+
+		if (!playlist) {
+			throw new ApiError(400, "Playlist not found");
+		}
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					playlist,
+					"Playlist fetched Successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(
+			400,
+			"Error occured while fetching playlist"
+		);
+	}
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
 	const { playlistId, videoId } = req.params;
+	const userId = req.user?._id;
+
+	if (!playlistId || !videoId) {
+		throw new ApiError(
+			400,
+			"Playlist Id and Video Id both are required"
+		);
+	}
+
+	if (!userId) {
+		throw new ApiError(400, "User not Authenticated");
+	}
+
+	try {
+		const playlist = await Playlist.findById(playlistId);
+
+		if (!playlist) {
+			throw new ApiError(400, "Playlist not exist");
+		}
+
+		if (playlist.owner.toString() !== userId.toString()) {
+			throw new ApiError(
+				400,
+				"You are not allowed to upload video in this playlist"
+			);
+		}
+
+		const videoExists = await Video.exists({ _id: videoId });
+		if (!videoExists) {
+			throw new ApiError(404, "Video not Uploaded");
+		}
+
+		if (playlist.videos.includes(videoId)) {
+			throw new ApiError(400, "Video alreasy in Playlist");
+		}
+
+		playlist.videos.push(videoId);
+		await playlist.save();
+
+		return res
+			.status(200)
+			.json(
+				new ApiResponse(
+					200,
+					{},
+					"Video Added successfully"
+				)
+			);
+	} catch (error) {
+		throw new ApiError(
+			400,
+			"Error occured while adding video to playlist"
+		);
+	}
 });
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
